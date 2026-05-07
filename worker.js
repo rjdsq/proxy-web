@@ -165,18 +165,25 @@ async function handleProxyRequest(request, url) {
       body = await handleHtmlContent(response, url.protocol, url.host, target);
     }
 
-    // 返回响应
+    const finalHeaders = {
+      ...Object.fromEntries(response.headers),
+      ...corsHeaders(),
+      ...noCacheHeaders()
+    };
+
+    const dlName = url.searchParams.get('_dl');
+    if (dlName) {
+      finalHeaders['Content-Disposition'] = `attachment; filename="${encodeURIComponent(dlName)}"`;
+    }
+
     return new Response(body, {
       status: response.status,
       statusText: response.statusText,
-      headers: {
-        ...Object.fromEntries(response.headers),
-        ...corsHeaders(),
-        ...noCacheHeaders()
-      }
+      headers: finalHeaders
     });
 
   } catch (error) {
+
     return new Response(
       JSON.stringify({
         error: 'Proxy request failed',
@@ -391,10 +398,14 @@ function getRootHtml() {
                       <div class="font-medium text-zinc-900 dark:text-zinc-100 mb-2">方式 4: HTTP 代理</div>
                       <code class="text-xs text-teal-600 dark:text-teal-400 break-all" id="method4"></code>
                     </div>
+                    <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
+                      <div class="font-medium text-zinc-900 dark:text-zinc-100 mb-2">方式 5: 强制下载文件</div>
+                      <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">追加 ?_dl=文件名 参数强制触发下载</p>
+                      <code class="text-xs text-teal-600 dark:text-teal-400 break-all" id="method5"></code>
+                    </div>
                   </div>
                 </div>
 
-                <!-- 使用场景 -->
                 <div class="mt-16 rounded-2xl border border-zinc-100 p-6 dark:border-zinc-700/40">
                   <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
                     使用场景
@@ -428,8 +439,16 @@ function getRootHtml() {
                       </p>
                       <code class="text-xs text-teal-600 dark:text-teal-400 break-all" id="scene4"></code>
                     </div>
+                    <div class="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
+                      <div class="font-medium text-zinc-900 dark:text-zinc-100 mb-2">💾 大文件强制下载</div>
+                      <p class="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
+                        绕过浏览器预览，唤起原生下载器
+                      </p>
+                      <code class="text-xs text-teal-600 dark:text-teal-400 break-all" id="scene5"></code>
+                    </div>
                   </div>
                 </div>
+
 
                 <!-- 功能特性 -->
                 <div class="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -500,16 +519,16 @@ function getRootHtml() {
     // 获取当前域名并填充示例
     const currentOrigin = window.location.origin;
 
-    // 填充使用方式示例
     document.getElementById('method2').textContent = currentOrigin + '/?url=https://example.com';
     document.getElementById('method3').textContent = currentOrigin + '/https://example.com';
     document.getElementById('method4').textContent = 'export HTTP_PROXY=' + currentOrigin;
+    document.getElementById('method5').textContent = currentOrigin + '/https://example.com/app.apk?_dl=app.apk';
 
-    // 填充使用场景示例
     document.getElementById('scene1').textContent = currentOrigin + '/https://raw.githubusercontent.com/user/repo/main/file.txt';
     document.getElementById('scene2').textContent = currentOrigin + '/https://registry-1.docker.io';
     document.getElementById('scene3').textContent = currentOrigin + '/https://api.openai.com/v1/chat/completions';
     document.getElementById('scene4').textContent = 'fetch("' + currentOrigin + '/https://api.example.com/data")';
+    document.getElementById('scene5').textContent = currentOrigin + '/https://raw.githubusercontent.com/user/repo/main/app.apk?_dl=app.apk';
 
     // 表单提交处理
     document.getElementById('urlForm').addEventListener('submit', function(event) {
