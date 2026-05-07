@@ -3,7 +3,7 @@ main = "worker.js"
 compatibility_date = "2024-01-01"
 
 # 部署配置
-# account_id = ""  # 取消释并填入你的 Cloudflare Account ID
+# account_id = ""  # 取消释并填入的 Cloudflare Account ID
 
 # Workers 设置
 workers_dev = true
